@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptDone — Variant A 多工作流与多内容承接方案 (UI Prototype)</title>
+  <!--
+    UI PROTOTYPE (THROWAWAY)
+    Question: Under Variant A (Asset-Centric Left-Rail Workbench), how should multiple Workflows,
+    multiple Tuning Sessions, and multiple Datasets/Prompts/Eval Suites be organized and navigated?
+    Three structurally different patterns:
+      A1: Directory Index Page -> Auto-Collapsed Icon Rail Detail View
+      A2: Dual-Column Master-Detail Sidebar (Primary Nav + Collapsible Object/Session Tree)
+      A3: Global 3-Level Context Bar + Multi-Tab Open Workspaces (IDE Tabs)
+  -->
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-2: #f1f4f8;
+      --surface-3: #e8edf4;
+      --border: #dde3ec;
+      --border-strong: #c5cedc;
+      --text: #111827;
+      --text-2: #4b5563;
+      --text-3: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --accent-border: #bfdbfe;
+      --green: #059669;
+      --green-soft: #ecfdf5;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --red: #dc2626;
+      --red-soft: #fef2f2;
+      --purple: #7c3aed;
+      --purple-soft: #f5f3ff;
+      --dark: #0f172a;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --radius: 8px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.16);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: var(--sans); font-size: 13px; line-height: 1.45;
+      color: var(--text); background: var(--bg);
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    code { font-family: var(--mono); font-size: 11.5px; }
+
+    .flex { display: flex; }
+    .flex-col { display: flex; flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .flex-1 { flex: 1; min-width: 0; min-height: 0; }
+    .scroll-y { overflow-y: auto; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .text-xs { font-size: 11px; }
+    .text-muted { color: var(--text-2); }
+    .font-mono { font-family: var(--mono); }
+    .p-3 { padding: 12px; }
+    .p-4 { padding: 16px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2);
+      white-space: nowrap;
+    }
+    .badge.blue { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-border); }
+    .badge.green { background: var(--green-soft); color: var(--green); border-color: #a7f3d0; }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); border-color: #fde68a; }
+    .badge.red { background: var(--red-soft); color: var(--red); border-color: #fecaca; }
+    .badge.purple { background: var(--purple-soft); color: var(--purple); border-color: #ddd6fe; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-strong);
+      background: var(--surface); font-size: 12px; font-weight: 500; white-space: nowrap;
+    }
+    .btn:hover { background: var(--surface-2); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: #1d4ed8; }
+    .btn.sm { padding: 4px 8px; font-size: 11px; }
+    .btn.subtle { border-color: transparent; background: transparent; color: var(--text-2); }
+    .btn.subtle:hover { background: var(--surface-2); color: var(--text); }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    }
+    .card-header {
+      padding: 9px 13px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600;
+    }
+    .card-body { padding: 12px 13px; }
+
+    .input-sm {
+      padding: 5px 8px; border: 1px solid var(--border-strong);
+      border-radius: 6px; background: var(--surface); font-size: 12px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+    th {
+      background: var(--surface-2); color: var(--text-2); font-weight: 600;
+      padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr.clickable:hover td { background: #f8fafc; cursor: pointer; }
+    tr.selected td { background: var(--accent-soft); }
+
+    .code-box {
+      background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px;
+      font-family: var(--mono); font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+    }
+    .diff-del { background: rgba(239,68,68,0.2); color: #fca5a5; display: block; padding: 1px 4px; }
+    .diff-add { background: rgba(16,185,129,0.2); color: #6ee7b7; display: block; padding: 1px 4px; }
+
+    #app-root { height: 100vh; display: flex; flex-direction: column; padding-bottom: 58px; }
+    .proto-topbar {
+      background: #111827; color: #e5e7eb; padding: 5px 14px; font-size: 11px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+    }
+    .proto-topbar strong { color: #93c5fd; }
+    .proto-state-pill {
+      background: rgba(255,255,255,0.08); padding: 2px 10px; border-radius: 999px;
+      font-family: var(--mono); font-size: 11px; color: #cbd5e1;
+    }
+
+    /* Left Primary Sidebar */
+    .a-sidebar {
+      width: 212px; background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.15s;
+    }
+    .a-sidebar.collapsed { width: 56px; align-items: center; }
+    .a-nav-group { padding: 10px 10px 3px; font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .a-nav-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      width: calc(100% - 12px); margin: 1px 6px; padding: 7px 9px;
+      border-radius: 6px; border: none; background: transparent; color: var(--text-2); text-align: left; font-size: 12.5px;
+    }
+    .a-nav-item:hover { background: var(--surface-2); color: var(--text); }
+    .a-nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .a-sidebar.collapsed .a-nav-item { width: 40px; height: 38px; justify-content: center; padding: 0; margin: 2px 0; }
+
+    /* Secondary Master List (A2) */
+    .a2-master {
+      width: 248px; background: #fbfcfe; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .a2-item {
+      padding: 8px 10px; border-radius: 6px; border: 1px solid transparent; cursor: pointer;
+    }
+    .a2-item:hover { background: var(--surface-2); }
+    .a2-item.active { background: var(--surface); border-color: var(--accent-border); box-shadow: var(--shadow-sm); }
+    .a2-session {
+      margin-left: 12px; padding: 4px 8px; border-left: 2px solid var(--border);
+      font-size: 11.5px; color: var(--text-2); cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    }
+    .a2-session:hover { color: var(--text); border-left-color: var(--border-strong); }
+    .a2-session.active { color: var(--accent); font-weight: 600; border-left-color: var(--accent); background: var(--accent-soft); border-radius: 0 4px 4px 0; }
+
+    /* Tab Bar (A3) */
+    .a3-tabbar {
+      background: var(--surface-2); border-bottom: 1px solid var(--border);
+      padding: 6px 12px 0; display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; flex-shrink: 0;
+    }
+    .a3-tab {
+      display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px;
+      border-radius: 7px 7px 0 0; border: 1px solid transparent; border-bottom: none;
+      background: transparent; color: var(--text-2); font-size: 12px; cursor: pointer; max-width: 240px;
+    }
+    .a3-tab:hover { background: rgba(255,255,255,0.6); }
+    .a3-tab.active {
+      background: var(--surface); color: var(--text); font-weight: 600;
+      border-color: var(--border); margin-bottom: -1px; padding-bottom: 7px;
+    }
+
+    /* Subtabs inside Workflow Detail */
+    .subtabs {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+    }
+    .tab-underline {
+      padding: 9px 2px; border: none; border-bottom: 2px solid transparent;
+      background: transparent; color: var(--text-2); font-weight: 500; font-size: 12.5px;
+    }
+    .tab-underline.active { border-bottom-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+    /* Grids */
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+    .grid-3-studio { display: grid; grid-template-columns: 235px 1fr 310px; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .dag-node {
+      background: var(--surface); border: 1.5px solid var(--border-strong);
+      border-radius: 7px; padding: 8px 10px; cursor: pointer;
+    }
+    .dag-node.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+    /* Floating Switcher */
+    .proto-switcher {
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 1000;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #0f172a; color: #f8fafc; padding: 6px 10px; border-radius: 999px;
+      border: 1px solid #334155; box-shadow: var(--shadow-lg); font-size: 12px;
+    }
+    .proto-switcher button {
+      width: 28px; height: 28px; border-radius: 999px; border: 1px solid #334155;
+      background: #1e293b; color: #f8fafc; font-weight: 700;
+    }
+    .proto-switcher button:hover { background: #334155; }
+    .proto-tag { background: #2563eb; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 999px; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.45);
+      display: flex; align-items: center; justify-content: center; z-index: 900; padding: 20px;
+    }
+    .modal {
+      background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg); width: min(780px, 95vw); max-height: 84vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-root"></div>
+  <div id="modal-root"></div>
+
+  <div class="proto-switcher" role="navigation" aria-label="Prototype Variant Switcher">
+    <button id="prev-variant" title="上一方案 (←)">←</button>
+    <div class="flex items-center gap-2" style="padding:0 6px;font-weight:600;">
+      <span class="proto-tag">Variant A 深化</span>
+      <span id="variant-label"></span>
+      <span style="color:#94a3b8;font-family:var(--mono);font-size:11px;">← / →</span>
+    </div>
+    <button id="next-variant" title="下一方案 (→)">→</button>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. THREE STRUCTURAL PATTERNS FOR MULTI-WORKFLOW / MULTI-CONTENT UNDER "A"
+    // =========================================================================
+    const VARIANTS = [
+      { key: 'A1', name: 'A1 (目录列表页 → 进工作台自动折叠侧栏)', desc: '主导航先看搜索/筛选目录页；进入某个 Workflow 后左侧自动收起为 56px 图标栏，释放三栏 Studio 空间' },
+      { key: 'A2', name: 'A2 (双级窄栏 Master-Detail：主导航 + 对象/Session 树)', desc: '主导航右侧紧邻可折叠 248px 次级列表栏，直接展开所有 Workflow 及其下多个 Tuning Session，秒切不跳页' },
+      { key: 'A3', name: 'A3 (全局三级面包屑 + IDE 多工作标签页 Tabs)', desc: '顶部永远保留 Workspace / Workflow / Session 切换器 + 多开标签栏，可同时挂着多个 Workflow 与 Import Draft 并行切换' }
+    ];
+
+    const WORKFLOWS = [
+      {
+        id: 'wf_l10n',
+        name: '跨境商品合规翻译与摘要',
+        tag: '出海本地化',
+        dataset: 'ecom_sku_source (v2 · 2,399条)',
+        updated: '10分钟前',
+        owner: 'Alex',
+        l1Pass: '92.4%',
+        l2Avg: '87.6',
+        nodes: [
+          { id: 'n1', name: 'Node 1: 源文案抽取', prompt: 'ecom-source-extractor', ver: 'v3 🔒', cache: true, text: '从 {{raw_title}} 抽取 brand, core_features[], compliance_flags[] 输出 JSON。' },
+          { id: 'n2', name: 'Node 2: 多语种精译', prompt: 'ecom-l10n-translator', ver: 'Draft (v5)', cache: false, text: '翻译为 {{target_lang}}，遵循 {{matched_glossary}} 与 {{style_guide}}，保留 <ph/> 与 ICU 变量。' }
+        ],
+        sessions: [
+          { id: 'ts_1', name: '日语格式修复实验', runs: 5, latestL1: '92.4%', status: '活跃调优中' },
+          { id: 'ts_2', name: 'Claude vs GPT 成本压测', runs: 3, latestL1: '89.1%', status: '已归档对比' },
+          { id: 'ts_3', name: '德语 ICU 复数规则专项', runs: 2, latestL1: '95.0%', status: '待人工复核' }
+        ]
+      },
+      {
+        id: 'wf_ticket',
+        name: '客服工单多级意图分类与路由',
+        tag: '售后客服',
+        dataset: 'cs_tickets_q1 (v1 · 8,400条)',
+        updated: '2小时前',
+        owner: 'Lin',
+        l1Pass: '97.8%',
+        l2Avg: '91.2',
+        nodes: [
+          { id: 'n1', name: 'Node 1: 情绪与语种识别', prompt: 'ticket-lang-sentiment', ver: 'v2 🔒', cache: true, text: '识别 {{ticket_body}} 语种与紧急度 (P0/P1/P2)。' },
+          { id: 'n2', name: 'Node 2: 32类意图结构化判定', prompt: 'ticket-intent-router', ver: 'v4 🔒', cache: false, text: '输出 intent_code, confidence, need_human_escalation。' }
+        ],
+        sessions: [
+          { id: 'ts_4', name: '退款争议边界召回优化', runs: 7, latestL1: '97.8%', status: '活跃调优中' },
+          { id: 'ts_5', name: '长对话 History Replay 接入', runs: 2, latestL1: '94.5%', status: 'Draft 测试中' }
+        ]
+      },
+      {
+        id: 'wf_contract',
+        name: '供应链合同条款风险抽取',
+        tag: '法务风控',
+        dataset: 'vendor_contracts (v3 · 420条)',
+        updated: '昨天',
+        owner: 'Mia',
+        l1Pass: '88.0%',
+        l2Avg: '84.3',
+        nodes: [
+          { id: 'n1', name: 'Node 1: 条款切片与实体抽取', prompt: 'contract-clause-extract', ver: 'Draft (v1)', cache: false, text: '抽取违约金上限、管辖法院、自动续约条款并输出 strict JSON。' }
+        ],
+        sessions: [
+          { id: 'ts_6', name: '偏 JSON 嵌套修复与严校验', runs: 4, latestL1: '88.0%', status: '活跃调优中' }
+        ]
+      }
+    ];
+
+    const DATASETS = [
+      { id: 'ds_1', name: 'ecom_sku_source', versions: 'v1, v2 (当前)', records: '2,399', hasDraft: true, draftName: 'Import Draft #04 (1 failed待修)', golden: false },
+      { id: 'ds_2', name: 'ecom_l10n_golden', versions: 'v1..v4', records: '180', hasDraft: false, draftName: '', golden: true },
+      { id: 'ds_3', name: 'cs_tickets_q1', versions: 'v1', records: '8,400', hasDraft: false, draftName: '', golden: false },
+      { id: 'ds_4', name: 'vendor_contracts', versions: 'v1..v3', records: '420', hasDraft: true, draftName: 'Import Draft #07 (追加50份)', golden: false }
+    ];
+
+    const PROMPTS = [
+      { id: 'p_1', name: 'ecom-source-extractor', ver: 'v3', draftDirty: false, usedBy: '跨境商品合规翻译 (Node 1)', review: '0 High' },
+      { id: 'p_2', name: 'ecom-l10n-translator', ver: 'v5', draftDirty: true, usedBy: '跨境商品合规翻译 (Node 2)', review: '1 Medium' },
+      { id: 'p_3', name: 'ticket-intent-router', ver: 'v4', draftDirty: false, usedBy: '客服工单意图分类 (Node 2)', review: '0 High' },
+      { id: 'p_4', name: 'contract-clause-extract', ver: 'v1', draftDirty: true, usedBy: '供应链合同风险抽取 (Node 1)', review: '未体检' }
+    ];
+
+    const state = {
+      variant: 'A1',
+      workspace: '出海本地化与业务中台 (Default)',
+      navSection: 'workflows', // workflows | datasets | prompts | eval_suites | localization | providers
+      searchQuery: '',
+      // A1 view mode: 'index' (list of workflows/datasets/prompts) vs 'detail' (inside selected item)
+      a1Mode: 'index',
+      a1SidebarPinned: false,
+      // A2 secondary master list collapse
+      a2MasterCollapsed: false,
+      // A3 open tabs
+      a3Tabs: [
+        { type: 'workflow', id: 'wf_l10n', sessionId: 'ts_1', label: '跨境商品合规翻译 · 日语格式修复' },
+        { type: 'workflow', id: 'wf_ticket', sessionId: 'ts_4', label: '客服工单分类 · 退款争议边界' },
+        { type: 'dataset', id: 'ds_1', label: 'Import Draft #04 (ecom_sku_source)' }
+      ],
+      a3ActiveTabIdx: 0,
+
+      // Selected active entities
+      selectedWfId: 'wf_l10n',
+      selectedSessionId: 'ts_1',
+      selectedNodeId: 'n2',
+      selectedDatasetId: 'ds_1',
+      selectedPromptId: 'p_2',
+      wfSubTab: 'studio', // studio | runs | diff | tuning
+      showBundleModal: false,
+      showCompareModal: false
+    };
+
+    function getWf(id) { return WORKFLOWS.find(w => w.id === (id || state.selectedWfId)) || WORKFLOWS[0]; }
+    function getSession(wf, sid) { return wf.sessions.find(s => s.id === (sid || state.selectedSessionId)) || wf.sessions[0]; }
+    function getNode(wf, nid) { return wf.nodes.find(n => n.id === (nid || state.selectedNodeId)) || wf.nodes[0]; }
+
+    // =========================================================================
+    // 2. URL & KEYBOARD SYNC
+    // =========================================================================
+    function initVariantFromUrl() {
+      const p = new URLSearchParams(window.location.search);
+      const raw = (p.get('variant') || 'A1').toUpperCase();
+      const mapped = raw === 'A' ? 'A1' : raw;
+      state.variant = VARIANTS.some(v => v.key === mapped) ? mapped : 'A1';
+    }
+    function setVariant(key) {
+      state.variant = key;
+      const u = new URL(window.location.href);
+      u.searchParams.set('variant', key);
+      window.history.replaceState({}, '', u);
+      render();
+    }
+    function cycleVariant(delta) {
+      const i = VARIANTS.findIndex(v => v.key === state.variant);
+      setVariant(VARIANTS[(i + delta + VARIANTS.length) % VARIANTS.length].key);
+    }
+    document.getElementById('prev-variant').onclick = () => cycleVariant(-1);
+    document.getElementById('next-variant').onclick = () => cycleVariant(1);
+    window.addEventListener('keydown', (e) => {
+      const t = (e.target && e.target.tagName || '').toLowerCase();
+      if (t === 'input' || t === 'textarea' || (e.target && e.target.isContentEditable)) return;
+      if (e.key === 'ArrowLeft') cycleVariant(-1);
+      if (e.key === 'ArrowRight') cycleVariant(1);
+    });
+
+    // =========================================================================
+    // 3. SHARED CONTENT RENDERERS (WORKFLOW DETAIL, INDEXES, ASSETS)
+    // =========================================================================
+    function renderTopProtoBanner() {
+      const v = VARIANTS.find(x => x.key === state.variant);
+      const wf = getWf();
+      const sess = getSession(wf);
+      return `
+        <div class="proto-topbar">
+          <div class="flex items-center gap-2 truncate">
+            <strong>PromptDone 原型 #10 · Variant A 深化</strong>
+            <span>|</span>
+            <span class="truncate">${v.desc}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="proto-state-pill">Section: ${state.navSection} | WF: ${wf.id} | Session: ${sess.id}</span>
+            <button class="btn sm" style="background:#1e293b;color:#f8fafc;border-color:#475569;" onclick="state.showCompareModal=true;render()">多工作流承接对比表</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWorkflowDetailBody(wf, sess) {
+      const node = getNode(wf);
+      const subTabs = [
+        { id: 'studio', label: '编排与调优 Studio' },
+        { id: 'runs', label: `Workflow Runs (${sess.runs})` },
+        { id: 'diff', label: '版本对比 Diff & 报告' },
+        { id: 'tuning', label: 'AI 调优 & Context Bundle' }
+      ];
+
+      let inner = '';
+      if (state.wfSubTab === 'studio') {
+        inner = `
+          <div class="card p-3 flex items-center justify-between gap-2" style="flex-wrap:wrap;">
+            <div class="flex items-center gap-2" style="flex-wrap:wrap;">
+              <span class="badge blue">Dataset: ${wf.dataset}</span>
+              <span class="badge">随机抽样 100 条 (seed=42)</span>
+              ${wf.id==='wf_l10n' ? '<span class="badge purple">语种矩阵: en-US × ja-JP × de-DE</span>' : ''}
+              <span class="badge green">⚡ 上游缓存命中可用</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn sm">↻ 断点续跑失败项</button>
+              <button class="btn primary sm">▶ 触发 Workflow Run</button>
+            </div>
+          </div>
+
+          <div class="grid-3-studio mt-3 flex-1" style="min-height:360px;">
+            <div class="card p-3 flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs">DAG 拓扑 (${wf.nodes.length} Nodes)</strong>
+                <button class="btn sm">+ Node</button>
+              </div>
+              ${wf.nodes.map((n, idx) => `
+                ${idx > 0 ? '<div class="text-xs text-muted" style="text-align:center;">↓ {{node_1.output}}</div>' : ''}
+                <div class="dag-node ${node.id===n.id?'active':''}" onclick="state.selectedNodeId='${n.id}';render()">
+                  <div class="flex items-center justify-between">
+                    <strong style="font-size:12px;">${n.name}</strong>
+                    <span class="badge ${n.ver.includes('Draft')?'amber':'blue'}">${n.ver}</span>
+                  </div>
+                  <div class="text-xs text-muted mt-2">${n.prompt} ${n.cache?'· ⚡缓存':''}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="card flex-col">
+              <div class="card-header">
+                <span>${node.name} <span class="badge">${node.prompt} · ${node.ver}</span></span>
+                <div class="flex gap-1">
+                  <button class="btn sm">🩺 Prompt Review</button>
+                  <button class="btn sm primary">发布 Version</button>
+                </div>
+              </div>
+              <div class="card-body flex-col gap-2">
+                <div class="code-box">${node.text}</div>
+                <div class="text-xs text-muted">支持 Monaco 编辑、History Messages 插槽、固定多轮追问脚本、strict JSON Schema → json-repair 两级兜底。</div>
+              </div>
+            </div>
+
+            <div class="card flex-col">
+              <div class="card-header"><span>Execution Trace 明细</span><span class="badge green">L1 Pass · L2 87.6</span></div>
+              <div class="card-body text-xs flex-col gap-2">
+                <div>当前 Session: <strong>${sess.name}</strong></div>
+                <div class="code-box">Record #1042 | Latency: 1.4s | Cost: $0.0041
+Node 1: cache_hit=true
+Node 2: valid JSON (Glossary matched: 2)</div>
+                <div class="flex gap-2">
+                  <button class="btn sm">+ 入 Bad Case 篮</button>
+                  <button class="btn sm">★ 加入黄金集</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.wfSubTab === 'runs') {
+        inner = `
+          <div class="card">
+            <div class="card-header"><span>${wf.name} → ${sess.name} 的 Workflow Runs</span><button class="btn sm primary">+ 发起新 Run</button></div>
+            <table>
+              <thead><tr><th>Run ID</th><th>Dataset Snapshot</th><th>L1 通过率</th><th>L2 均分</th><th>任务费用 / 裁判费用</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr class="clickable" onclick="state.wfSubTab='diff';render()"><td><strong>#run_108</strong> <span class="badge blue">最新</span></td><td>${wf.dataset}</td><td>${sess.latestL1}</td><td>${wf.l2Avg}</td><td>$1.21 / $0.55</td><td><button class="btn sm">Diff 对比</button></td></tr>
+                <tr><td><strong>#run_104</strong></td><td>${wf.dataset}</td><td>89.3%</td><td>82.8</td><td>$1.18 / $0.52</td><td><button class="btn sm">查看 Trace</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (state.wfSubTab === 'diff') {
+        inner = `
+          <div class="card">
+            <div class="card-header"><span>版本对比 Diff (#run_108 vs #run_104)</span><button class="btn primary sm" onclick="state.showBundleModal=true;render()">📦 导出 Context Bundle</button></div>
+            <div class="card-body flex-col gap-2">
+              <div class="flex gap-2"><span class="badge red">Regression 置顶: 3</span><span class="badge green">Improvement: +18</span><span class="badge amber">Conflict/Tie 位置冲突: 3</span></div>
+              <div class="code-box"><span class="diff-del">- {"title":"AeroPro ワイヤレスヘッドホン 割引中"}</span><span class="diff-add">+ {"title":"AeroPro ワイヤレスノイズキャンセリングイヤホン {discount}% OFF"}</span></div>
+            </div>
+          </div>
+        `;
+      } else {
+        inner = `
+          <div class="grid-2">
+            <div class="card p-3 flex-col gap-2">
+              <strong>单 Node 聚焦 Tuning Suggestion</strong>
+              <div class="text-xs text-muted">针对 ${node.name} 的选定 Bad Case + 2 条正向对照生成 Diff 建议，独立核算调优开销，采纳时保护已锁定版本。</div>
+              <button class="btn primary sm" style="align-self:flex-start;">生成改写 Diff 建议</button>
+            </div>
+            <div class="card p-3 flex-col gap-2">
+              <strong>Context Bundle 一键导出（Codex / Antigravity）</strong>
+              <div class="text-xs text-muted">提供「Prompt 调优预设」与「工程排障预设」，支持 <code>context-bundle.md</code> 复制及 <code>.json/.zip</code> 下载。</div>
+              <button class="btn sm" style="align-self:flex-start;" onclick="state.showBundleModal=true;render()">打开导出预览</button>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="subtabs">
+          <div class="flex items-center gap-3">
+            ${subTabs.map(t => `<button class="tab-underline ${state.wfSubTab===t.id?'active':''}" onclick="state.wfSubTab='${t.id}';render()">${t.label}</button>`).join('')}
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge purple">Session: ${sess.name}</span>
+            <button class="btn sm" onclick="state.showBundleModal=true;render()">📦 Context Bundle</button>
+          </div>
+        </div>
+        <div class="flex-1 scroll-y p-4 flex-col">${inner}</div>
+      `;
+    }
+
+    function renderDirectoryIndex(section) {
+      const q = state.searchQuery.toLowerCase();
+      if (section === 'workflows') {
+        const list = WORKFLOWS.filter(w => !q || w.name.toLowerCase().includes(q) || w.tag.includes(q));
+        return `
+          <div class="flex-col gap-3">
+            <div class="flex items-center justify-between" style="flex-wrap:wrap;gap:8px;">
+              <div>
+                <strong style="font-size:16px;">Workflows 工作流目录 (${WORKFLOWS.length})</strong>
+                <div class="text-xs text-muted">支持按业务线/负责人检索、从预置模板（如 Translate-and-Revise）一键创建，点击进入工作台</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input class="input-sm" placeholder="搜索 Workflow / 标签..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;render()" />
+                <button class="btn sm">+ 从翻译模板创建</button>
+                <button class="btn primary sm">+ 新建空白 Workflow</button>
+              </div>
+            </div>
+            <div class="grid-cards">
+              ${list.map(w => `
+                <div class="card p-3 flex-col gap-2" style="cursor:pointer;" onclick="openWorkflow('${w.id}', '${w.sessions[0].id}')">
+                  <div class="flex items-center justify-between">
+                    <strong>${w.name}</strong>
+                    <span class="badge blue">${w.tag}</span>
+                  </div>
+                  <div class="text-xs text-muted">绑定 Dataset: <code>${w.dataset}</code></div>
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="badge green">L1 ${w.l1Pass}</span>
+                    <span class="badge">L2 ${w.l2Avg}</span>
+                    <span class="badge purple">${w.sessions.length} 个 Sessions</span>
+                  </div>
+                  <div style="border-top:1px solid var(--border);padding-top:6px;margin-top:2px;" class="flex items-center justify-between text-xs text-muted">
+                    <span>最近：${w.sessions[0].name}</span>
+                    <span>${w.owner} · ${w.updated}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      if (section === 'datasets') {
+        const list = DATASETS.filter(d => !q || d.name.toLowerCase().includes(q));
+        return `
+          <div class="flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <strong style="font-size:16px;">Datasets 数据集目录 (${DATASETS.length})</strong>
+              <div class="flex gap-2">
+                <input class="input-sm" placeholder="搜索 Dataset..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;render()" />
+                <button class="btn primary sm">+ 上传文件创建 Import Draft</button>
+              </div>
+            </div>
+            <div class="card">
+              <table>
+                <thead><tr><th>Dataset 名称</th><th>版本</th><th>Record 数</th><th>进行中 Import Draft</th><th>类型</th><th>操作</th></tr></thead>
+                <tbody>
+                  ${list.map(d => `
+                    <tr class="clickable" onclick="openDataset('${d.id}')">
+                      <td><strong>${d.name}</strong></td>
+                      <td><span class="badge blue">${d.versions}</span></td>
+                      <td>${d.records}</td>
+                      <td>${d.hasDraft ? `<span class="badge amber">${d.draftName}</span>` : '<span class="text-muted">无未发布草稿</span>'}</td>
+                      <td>${d.golden ? '<span class="badge amber">★ 黄金基准集</span>' : '<span class="badge">常规集</span>'}</td>
+                      <td><button class="btn sm">进入清洗 / 版本详情</button></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      if (section === 'prompts') {
+        return `
+          <div class="flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <strong style="font-size:16px;">Prompts 资产版本库 (${PROMPTS.length})</strong>
+              <button class="btn primary sm">+ 新建独立 Prompt</button>
+            </div>
+            <div class="card">
+              <table>
+                <thead><tr><th>Prompt 名称</th><th>最新 Version</th><th>Draft 状态</th><th>最近 Prompt Review</th><th>被引用 Workflow / Node</th></tr></thead>
+                <tbody>
+                  ${PROMPTS.map(p => `
+                    <tr class="clickable" onclick="state.selectedPromptId='${p.id}';alert('进入独立 Prompt 详情与版本历史/Diff/Prompt Review 页面: ${p.name}')">
+                      <td><strong>${p.name}</strong></td>
+                      <td><span class="badge blue">${p.ver}</span></td>
+                      <td>${p.draftDirty ? '<span class="badge amber">有未发布 Draft</span>' : '与最新版一致'}</td>
+                      <td><span class="badge">${p.review}</span></td>
+                      <td class="text-muted">${p.usedBy}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      if (section === 'eval_suites') {
+        return `<div class="card p-4"><strong>Eval Suites 列表 (3 套)</strong><div class="text-xs text-muted mt-2">• 出海翻译标准严格门禁 (L1 strict JSON + ICU + L2 跨家族盲评)<br/>• 客服分类高精度准确率 Suite<br/>• 合同条款抽取 Schema 校验 Suite</div></div>`;
+      }
+      if (section === 'localization') {
+        return `<div class="card p-4"><strong>Glossary (4 张表) & Style Guide (6 套语种规范)</strong><div class="text-xs text-muted mt-2">Workspace 级多语言术语与风格库，供任意 Node 按需挂载并在 Workflow Run 时冻结快照。</div></div>`;
+      }
+      return `<div class="card p-4"><strong>Model Providers (LiteLLM · 4 个已配置端点)</strong><div class="text-xs text-muted mt-2">OpenAI / Anthropic / DeepSeek / 内网 vLLM — Fernet 加密密钥 + Redis RPM/TPM 限流 + 单价覆盖。</div></div>`;
+    }
+
+    function renderDatasetDetail(dsId) {
+      const ds = DATASETS.find(d => d.id === dsId) || DATASETS[0];
+      return `
+        <div class="flex-col gap-3">
+          <div class="card p-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              ${state.variant === 'A1' ? `<button class="btn sm" onclick="state.a1Mode='index';render()">← 返回 Datasets 列表</button>` : ''}
+              <strong>${ds.name}</strong>
+              <span class="badge blue">${ds.versions}</span>
+              ${ds.hasDraft ? `<span class="badge amber">${ds.draftName}</span>` : ''}
+            </div>
+            <button class="btn primary sm">发布新 Dataset Version</button>
+          </div>
+          <div class="card p-3 text-xs">
+            <strong>四角色字段映射 & 偏 JSON 修复工作区：</strong><br/>
+            Sheet/编码/JSONPath 配置 → 100 条同步预览 → 仅对显式 <code>JSON</code> 列执行两级 <code>json-repair</code>（标黄 <code>repaired</code> / 标红 <code>failed</code> 在线修复或导出错行）→ 不可变版本快照。
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 4. VARIANT A1 / A2 / A3 SHELLS
+    // =========================================================================
+    function renderPrimaryNav(collapsed) {
+      const groups = [
+        { title: '调优核心', items: [{ id: 'workflows', icon: '⚡', label: 'Workflows', count: WORKFLOWS.length }] },
+        { title: 'Workspace 资产', items: [
+          { id: 'datasets', icon: '🗂', label: 'Datasets', count: DATASETS.length },
+          { id: 'prompts', icon: '📝', label: 'Prompts', count: PROMPTS.length },
+          { id: 'eval_suites', icon: '⚖️', label: 'Eval Suites', count: 3 },
+          { id: 'localization', icon: '🌐', label: 'Glossary & Style', count: '' }
+        ]},
+        { title: '设置', items: [{ id: 'providers', icon: '⚙️', label: 'Model Providers', count: 4 }] }
+      ];
+
+      return `
+        <aside class="a-sidebar ${collapsed ? 'collapsed' : ''}">
+          <div style="padding:10px 12px;border-bottom:1px solid var(--border);width:100%;" class="flex items-center justify-between">
+            ${collapsed ? `<strong style="font-size:13px;margin:auto;">PD</strong>` : `
+              <div class="truncate">
+                <strong style="font-size:14px;">PromptDone</strong>
+                <div class="text-xs text-muted truncate">${state.workspace}</div>
+              </div>
+            `}
+          </div>
+          <div class="flex-1 scroll-y w-full" style="width:100%;">
+            ${groups.map(g => `
+              ${!collapsed ? `<div class="a-nav-group">${g.title}</div>` : '<div style="height:8px;"></div>'}
+              ${g.items.map(it => `
+                <button class="a-nav-item ${state.navSection===it.id?'active':''}" title="${it.label}" onclick="selectNav('${it.id}')">
+                  <span class="flex items-center gap-2 truncate"><span>${it.icon}</span>${!collapsed ? `<span>${it.label}</span>` : ''}</span>
+                  ${!collapsed && it.count !== '' ? `<span class="badge">${it.count}</span>` : ''}
+                </button>
+              `).join('')}
+            `).join('')}
+          </div>
+          ${state.variant === 'A1' && state.a1Mode === 'detail' ? `
+            <div style="padding:8px;border-top:1px solid var(--border);width:100%;text-align:center;">
+              <button class="btn sm subtle" onclick="state.a1SidebarPinned=!state.a1SidebarPinned;render()" title="展开/收起侧栏">${collapsed ? '»' : '« 收起侧栏'}</button>
+            </div>
+          ` : ''}
+        </aside>
+      `;
+    }
+
+    function renderVariantA1() {
+      const inDetail = state.a1Mode === 'detail';
+      const collapsed = inDetail && !state.a1SidebarPinned;
+      const wf = getWf();
+      const sess = getSession(wf);
+
+      let main = '';
+      if (!inDetail) {
+        main = `<div class="flex-1 scroll-y p-4">${renderDirectoryIndex(state.navSection)}</div>`;
+      } else if (state.navSection === 'workflows') {
+        main = `
+          <header style="background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;" class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2" style="flex-wrap:wrap;">
+              <button class="btn sm" onclick="state.a1Mode='index';render()">← 全部 Workflows</button>
+              <span>/</span>
+              <select class="input-sm" style="font-weight:600;" onchange="openWorkflow(this.value)">
+                ${WORKFLOWS.map(w => `<option value="${w.id}" ${w.id===wf.id?'selected':''}>Workflow: ${w.name}</option>`).join('')}
+              </select>
+              <span>/</span>
+              <select class="input-sm" onchange="state.selectedSessionId=this.value;render()">
+                ${wf.sessions.map(s => `<option value="${s.id}" ${s.id===sess.id?'selected':''}>Session: ${s.name} (${s.runs} runs)</option>`).join('')}
+              </select>
+              <button class="btn sm" onclick="alert('在当前 Workflow 下新建 Tuning Session')">+ 新建 Session</button>
+            </div>
+            <span class="badge green">主侧栏已自动折叠，释放 Studio 宽度</span>
+          </header>
+          ${renderWorkflowDetailBody(wf, sess)}
+        `;
+      } else if (state.navSection === 'datasets') {
+        main = `<div class="flex-1 scroll-y p-4">${renderDatasetDetail(state.selectedDatasetId)}</div>`;
+      } else {
+        main = `<div class="flex-1 scroll-y p-4">${renderDirectoryIndex(state.navSection)}</div>`;
+      }
+
+      return `<div class="flex flex-1" style="min-height:0;">${renderPrimaryNav(collapsed)}<div class="flex-1 flex-col" style="min-width:0;">${main}</div></div>`;
+    }
+
+    function renderVariantA2() {
+      const wf = getWf();
+      const sess = getSession(wf);
+      let masterListHtml = '';
+
+      if (state.navSection === 'workflows') {
+        masterListHtml = `
+          <div class="p-3 flex-col gap-2 scroll-y flex-1">
+            <div class="flex items-center justify-between">
+              <strong class="text-xs">Workflows & Sessions (${WORKFLOWS.length})</strong>
+              <button class="btn sm">+ 新建</button>
+            </div>
+            <input class="input-sm" placeholder="过滤工作流或 Session..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;render()" />
+            ${WORKFLOWS.filter(w => !state.searchQuery || w.name.includes(state.searchQuery)).map(w => `
+              <div class="a2-item ${w.id===wf.id?'active':''}" onclick="openWorkflow('${w.id}', '${w.sessions[0].id}')">
+                <div class="flex items-center justify-between gap-1">
+                  <strong style="font-size:12px;" class="truncate">${w.name}</strong>
+                  <span class="badge">${w.tag}</span>
+                </div>
+                <div class="text-xs text-muted mt-2">${w.sessions.length} Sessions · L1 ${w.l1Pass}</div>
+                ${w.id === wf.id ? `
+                  <div class="flex-col gap-1 mt-2">
+                    ${w.sessions.map(s => `
+                      <div class="a2-session ${s.id===sess.id?'active':''}" onclick="event.stopPropagation();state.selectedSessionId='${s.id}';render()">
+                        <span class="truncate">${s.name}</span>
+                        <span>${s.runs}</span>
+                      </div>
+                    `).join('')}
+                    <button class="btn sm subtle" style="justify-content:flex-start;margin-left:10px;" onclick="event.stopPropagation();alert('新建 Tuning Session')">+ 新建 Session</button>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (state.navSection === 'datasets') {
+        masterListHtml = `
+          <div class="p-3 flex-col gap-2 scroll-y flex-1">
+            <div class="flex items-center justify-between"><strong class="text-xs">Datasets (${DATASETS.length})</strong><button class="btn sm">+ 上传</button></div>
+            ${DATASETS.map(d => `
+              <div class="a2-item ${state.selectedDatasetId===d.id?'active':''}" onclick="state.selectedDatasetId='${d.id}';render()">
+                <strong style="font-size:12px;">${d.name}</strong>
+                <div class="text-xs text-muted mt-2">${d.versions} · ${d.records} 条</div>
+                ${d.hasDraft ? `<div class="badge amber mt-2">${d.draftName}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (state.navSection === 'prompts') {
+        masterListHtml = `
+          <div class="p-3 flex-col gap-2 scroll-y flex-1">
+            <div class="flex items-center justify-between"><strong class="text-xs">Prompts (${PROMPTS.length})</strong><button class="btn sm">+ 新建</button></div>
+            ${PROMPTS.map(p => `
+              <div class="a2-item ${state.selectedPromptId===p.id?'active':''}" onclick="state.selectedPromptId='${p.id}';render()">
+                <strong style="font-size:12px;">${p.name}</strong>
+                <div class="text-xs text-muted mt-2">${p.ver} ${p.draftDirty?'· Draft有修改':''}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      let rightMain = '';
+      if (state.navSection === 'workflows') {
+        rightMain = `
+          <header style="background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px;" class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <button class="btn sm" onclick="state.a2MasterCollapsed=!state.a2MasterCollapsed;render()">${state.a2MasterCollapsed ? '展开对象栏' : '收起对象栏'}</button>
+              <strong style="font-size:14px;">${wf.name}</strong>
+              <span class="badge purple">${sess.name}</span>
+            </div>
+            <span class="text-xs text-muted">Master-Detail 树结构：多工作流/多 Session 同屏秒切</span>
+          </header>
+          ${renderWorkflowDetailBody(wf, sess)}
+        `;
+      } else if (state.navSection === 'datasets') {
+        rightMain = `<div class="flex-1 scroll-y p-4">${renderDatasetDetail(state.selectedDatasetId)}</div>`;
+      } else {
+        rightMain = `<div class="flex-1 scroll-y p-4">${renderDirectoryIndex(state.navSection)}</div>`;
+      }
+
+      return `
+        <div class="flex flex-1" style="min-height:0;">
+          ${renderPrimaryNav(false)}
+          ${!state.a2MasterCollapsed && masterListHtml ? `<aside class="a2-master">${masterListHtml}</aside>` : ''}
+          <div class="flex-1 flex-col" style="min-width:0;">${rightMain}</div>
+        </div>
+      `;
+    }
+
+    function renderVariantA3() {
+      const wf = getWf();
+      const sess = getSession(wf);
+      const activeTab = state.a3Tabs[state.a3ActiveTabIdx] || state.a3Tabs[0];
+
+      let body = '';
+      if (state.navSection !== 'workflows') {
+        body = `<div class="flex-1 scroll-y p-4">${renderDirectoryIndex(state.navSection)}</div>`;
+      } else if (activeTab && activeTab.type === 'dataset') {
+        body = `<div class="flex-1 scroll-y p-4">${renderDatasetDetail(activeTab.id)}</div>`;
+      } else {
+        const tWf = getWf(activeTab ? activeTab.id : state.selectedWfId);
+        const tSess = getSession(tWf, activeTab ? activeTab.sessionId : state.selectedSessionId);
+        body = renderWorkflowDetailBody(tWf, tSess);
+      }
+
+      return `
+        <div class="flex flex-1" style="min-height:0;">
+          ${renderPrimaryNav(false)}
+          <div class="flex-1 flex-col" style="min-width:0;">
+            <!-- Global 3-Level Context Bar -->
+            <header style="background:var(--surface);border-bottom:1px solid var(--border);padding:7px 14px;" class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2" style="flex-wrap:wrap;">
+                <span class="badge dark" style="background:var(--dark);color:#fff;">Workspace</span>
+                <select class="input-sm" onchange="state.workspace=this.value;render()">
+                  <option>${state.workspace}</option>
+                  <option>风控合规研发组</option>
+                </select>
+                <span>/</span>
+                <select class="input-sm" style="font-weight:600;" onchange="openA3WorkflowTab(this.value)">
+                  ${WORKFLOWS.map(w => `<option value="${w.id}" ${w.id===wf.id?'selected':''}>WF: ${w.name}</option>`).join('')}
+                </select>
+                <span>/</span>
+                <select class="input-sm" onchange="switchA3Session(this.value)">
+                  ${wf.sessions.map(s => `<option value="${s.id}" ${s.id===sess.id?'selected':''}>Session: ${s.name}</option>`).join('')}
+                </select>
+              </div>
+              <button class="btn sm" onclick="state.navSection='workflows';state.a1Mode='index';alert('可用 ⌘K 快速搜索任意 Workflow / Dataset / Prompt / Session')">⌘K 快速跳转</button>
+            </header>
+
+            <!-- IDE Multi-Tab Bar -->
+            <div class="a3-tabbar">
+              ${state.a3Tabs.map((t, i) => `
+                <div class="a3-tab ${state.navSection==='workflows' && state.a3ActiveTabIdx===i?'active':''}" onclick="activateA3Tab(${i})">
+                  <span class="badge ${t.type==='dataset'?'amber':'blue'}" style="padding:1px 5px;font-size:10px;">${t.type==='dataset'?'DS':'WF'}</span>
+                  <span class="truncate">${t.label}</span>
+                  ${state.a3Tabs.length > 1 ? `<span style="color:var(--text-3);margin-left:2px;" onclick="event.stopPropagation();closeA3Tab(${i})">×</span>` : ''}
+                </div>
+              `).join('')}
+              <button class="btn sm subtle" style="margin-bottom:4px;" onclick="openA3WorkflowTab('wf_contract')">+ 打开第3个工作流标签</button>
+            </div>
+
+            ${body}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 5. MODALS & ACTIONS
+    // =========================================================================
+    function renderModals() {
+      const root = document.getElementById('modal-root');
+      if (state.showCompareModal) {
+        root.innerHTML = `
+          <div class="modal-backdrop" onclick="if(event.target===this){state.showCompareModal=false;render();}">
+            <div class="modal">
+              <div class="card-header"><span>Variant A 多工作流 / 多内容承接模式对比</span><button class="btn sm" onclick="state.showCompareModal=false;render()">关闭</button></div>
+              <div class="card-body scroll-y">
+                <table>
+                  <thead><tr><th>维度</th><th>A1 (目录页 → 折叠侧栏详情)</th><th>A2 (双级 Master-Detail 树)</th><th>A3 (全局 Context 条 + 多标签页)</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>多 Workflow 扩展性</strong></td><td>极强（全宽目录页，支持数十个工作流过滤与模板创建）</td><td>强（248px 滚动树，支持就地展开 Session）</td><td>强（顶部下拉 + ⌘K + 多开标签页）</td></tr>
+                    <tr><td><strong>Studio 横向空间</strong></td><td><strong>最大</strong>（进工作台后主栏自动缩至 56px）</td><td>较挤（212+248=460px 双侧栏占屏，需手动收起）</td><td>中等（212px 固定侧栏 + 顶部多一层 Tab 栏）</td></tr>
+                    <tr><td><strong>多任务并行/高频切换</strong></td><td>需返回目录页或用顶部下拉切换</td><td>极快（树上点一下秒切另一条 WF/Session）</td><td><strong>极快</strong>（同时打开多个 WF 与 Import Draft 标签）</td></tr>
+                    <tr><td><strong>信息结构复杂度</strong></td><td>最简单（标准列表/详情两级心智）</td><td>中等（树层级+可折叠开关）</td><td>偏高（标签页生命周期管理较重）</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      if (state.showBundleModal) {
+        root.innerHTML = `
+          <div class="modal-backdrop" onclick="if(event.target===this){state.showBundleModal=false;render();}">
+            <div class="modal">
+              <div class="card-header"><span>📦 Context Bundle 导出预览</span><button class="btn sm" onclick="state.showBundleModal=false;render()">关闭</button></div>
+              <div class="card-body"><div class="code-box"># Context Bundle (${getWf().name}) — Prompt 调优预设 / 工程排障预设</div></div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      root.innerHTML = '';
+    }
+
+    window.selectNav = (sec) => {
+      state.navSection = sec;
+      state.searchQuery = '';
+      if (state.variant === 'A1') state.a1Mode = 'index';
+      render();
+    };
+    window.openWorkflow = (wfId, sessId) => {
+      const wf = getWf(wfId);
+      state.navSection = 'workflows';
+      state.selectedWfId = wf.id;
+      state.selectedSessionId = sessId || wf.sessions[0].id;
+      state.selectedNodeId = wf.nodes[wf.nodes.length - 1].id;
+      if (state.variant === 'A1') state.a1Mode = 'detail';
+      render();
+    };
+    window.openDataset = (dsId) => {
+      state.navSection = 'datasets';
+      state.selectedDatasetId = dsId;
+      if (state.variant === 'A1') state.a1Mode = 'detail';
+      render();
+    };
+    window.activateA3Tab = (idx) => {
+      state.navSection = 'workflows';
+      state.a3ActiveTabIdx = idx;
+      const t = state.a3Tabs[idx];
+      if (t && t.type === 'workflow') {
+        state.selectedWfId = t.id;
+        state.selectedSessionId = t.sessionId;
+      }
+      render();
+    };
+    window.closeA3Tab = (idx) => {
+      state.a3Tabs.splice(idx, 1);
+      if (state.a3ActiveTabIdx >= state.a3Tabs.length) state.a3ActiveTabIdx = state.a3Tabs.length - 1;
+      activateA3Tab(state.a3ActiveTabIdx);
+    };
+    window.openA3WorkflowTab = (wfId) => {
+      const wf = getWf(wfId);
+      const existing = state.a3Tabs.findIndex(t => t.type === 'workflow' && t.id === wf.id);
+      if (existing >= 0) { activateA3Tab(existing); return; }
+      state.a3Tabs.push({ type: 'workflow', id: wf.id, sessionId: wf.sessions[0].id, label: `${wf.name.slice(0,8)} · ${wf.sessions[0].name.slice(0,6)}` });
+      activateA3Tab(state.a3Tabs.length - 1);
+    };
+    window.switchA3Session = (sid) => {
+      const wf = getWf();
+      const s = getSession(wf, sid);
+      state.selectedSessionId = s.id;
+      const t = state.a3Tabs[state.a3ActiveTabIdx];
+      if (t && t.type === 'workflow') { t.sessionId = s.id; t.label = `${wf.name.slice(0,8)} · ${s.name.slice(0,6)}`; }
+      render();
+    };
+
+    function render() {
+      const vMeta = VARIANTS.find(v => v.key === state.variant);
+      document.getElementById('variant-label').textContent = vMeta.name;
+      let html = '';
+      if (state.variant === 'A1') html = renderVariantA1();
+      if (state.variant === 'A2') html = renderVariantA2();
+      if (state.variant === 'A3') html = renderVariantA3();
+      document.getElementById('app-root').innerHTML = renderTopProtoBanner() + html;
+      renderModals();
+    }
+
+    initVariantFromUrl();
+    render();
+  </script>
+</body>
+</html>
