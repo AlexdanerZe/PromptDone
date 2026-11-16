@@ -29,27 +29,23 @@ An immutable, numbered snapshot (`v1`, `v2`, ...) of a **Prompt** that freezes i
 _Avoid_: Prompt snapshot, prompt revision
 
 **Node**:
-A single step inside a **Workflow** that binds to a published **Prompt Version** or live Draft and executes single-turn or sequential multi-turn inference to transform input variables into structured or text output.
-_Avoid_: Step, stage, module
+A single step inside a **Workflow** identified by a stable `step_key` (`step_1`, `step_2`, ...), binding to a published **Prompt Version** or live Draft (with optional parameter overrides) to execute single-turn or deterministic multi-turn inference.
+_Avoid_: Stage, module
 
 **Workflow**:
-A directed acyclic graph (DAG) of connected **Nodes** where upstream outputs map to downstream inputs for single-item, random-sample, or batch evaluation.
+An ordered linear sequence of **Nodes** in MVP (extensible to a DAG in Phase 2+) where upstream outputs map to downstream inputs and iterative tuning runs are executed and compared.
 _Avoid_: Pipeline, flow, chain
 
 **Workflow Run**:
-An immutable execution snapshot triggered within a **Tuning Session** that freezes the **Workflow** topology, each **Node**'s active Prompt and parameter snapshot, the bound **Dataset Version**, run mode, and resulting **Execution Traces**.
+An immutable execution snapshot triggered within a **Workflow** that freezes the linear **Node** sequence, each **Node**'s active Prompt snapshot and parameter overrides, the bound **Dataset Version**, run mode, and resulting **Execution Traces**.
 _Avoid_: Batch job, test run, run history item
 
 **Execution Trace**:
-The recorded per-item execution log of a **Dataset Record** (or a `(Dataset Record, target_lang)` pair in multi-language matrix runs) within a **Workflow Run**, capturing DAG node execution details, turn-by-turn rendered messages, raw responses, structured parsing status, cache hits, latency, and token cost.
+The recorded per-item execution log of a **Dataset Record** (or ad-hoc single-item input) within a **Workflow Run**, capturing step-by-step **Node** execution details, turn-by-turn rendered messages, raw responses, structured parsing status, cache hits, latency, and token cost.
 _Avoid_: Chat log, conversation history, run trace
 
-**Tuning Session**:
-An iterative optimization workspace recording Prompt draft edits, AI-assisted suggestions, and evaluation comparisons across runs.
-_Avoid_: Prompt chat, optimization thread
-
 **Tuning Suggestion**:
-A persisted AI-assisted optimization record inside a **Tuning Session** capturing selected Bad Cases, human diagnostic notes, root-cause analysis, diffable **Prompt** rewrite proposals, follow-up refinement turns, adoption status, and linked comparison **Workflow Runs**.
+A persisted AI-assisted optimization record inside a **Workflow** capturing selected Bad Cases, human diagnostic notes, root-cause analysis, diffable **Prompt** rewrite proposals, follow-up refinement turns, adoption status, and linked comparison **Workflow Runs**.
 _Avoid_: AI prompt fix, tuning chat message
 
 **Context Bundle**:
