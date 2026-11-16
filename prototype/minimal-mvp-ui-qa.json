@@ -1,0 +1,148 @@
+{
+  "scope": "仅内置示例、内存状态和页面交互；没有真实解析/数据库/模型/容量测试。",
+  "checks": [
+    {
+      "name": "同批对齐与退化置顶",
+      "passed": true
+    },
+    {
+      "name": "选中坏例预览与 Markdown 下载",
+      "passed": true
+    },
+    {
+      "name": "基准上游复用形成新运行且旧快照不变",
+      "passed": true
+    },
+    {
+      "name": "发布 v3 后历史可见",
+      "passed": true
+    },
+    {
+      "name": "导入、排除错误记录、生成 v2 且旧运行仍为 v1",
+      "passed": true
+    },
+    {
+      "name": "再次导入生成 v3，不覆写 v1/v2",
+      "passed": true
+    },
+    {
+      "name": "A/B/C 列表到详情入口",
+      "passed": true
+    },
+    {
+      "name": "切换方案更新 URL",
+      "passed": true
+    },
+    {
+      "name": "B 窄窗口无页面横向溢出",
+      "passed": true
+    },
+    {
+      "name": "辅助译文与人工标注",
+      "passed": true
+    },
+    {
+      "name": "浏览器控制台无错误",
+      "passed": true
+    }
+  ],
+  "runtime_observations": {
+    "main": [
+      {
+        "check": "上游复用与运行快照",
+        "value": {
+          "aUnchanged": true,
+          "cIds": [
+            "pd001",
+            "pd002",
+            "pd003",
+            "pd004",
+            "pd005",
+            "pd006",
+            "pd007",
+            "pd008"
+          ],
+          "cRow8": "success",
+          "runs": [
+            {
+              "dataVersion": 1,
+              "id": "A",
+              "reused": false,
+              "state": "completed"
+            },
+            {
+              "dataVersion": 1,
+              "id": "B",
+              "reused": false,
+              "state": "completed"
+            },
+            {
+              "dataVersion": 1,
+              "id": "C",
+              "reused": true,
+              "state": "completed"
+            }
+          ]
+        }
+      },
+      {
+        "check": "导入新版本与历史不变",
+        "value": {
+          "available": 7,
+          "dataVersion": 2,
+          "historyVersions": [
+            1,
+            1,
+            1
+          ]
+        }
+      },
+      {
+        "check": "方案切换与 URL",
+        "A": {
+          "hasAssetNav": true,
+          "url": "?variant=A",
+          "variant": "A"
+        },
+        "C": {
+          "hasDataInspector": true,
+          "url": "?variant=C",
+          "variant": "C"
+        }
+      }
+    ],
+    "repeat_import": {
+      "current": 3,
+      "history": [
+        1,
+        1,
+        1
+      ],
+      "versions": [
+        1,
+        2,
+        3
+      ]
+    },
+    "layout": [
+      {
+        "documentWidth": 1425,
+        "section": "run",
+        "variant": "C",
+        "width": 1440
+      },
+      {
+        "documentWidth": 765,
+        "variant": "B",
+        "width": 780
+      }
+    ]
+  },
+  "screenshots": [
+    "A-desktop.png",
+    "B-compare.png",
+    "B-desktop.png",
+    "B-narrow.png",
+    "C-desktop.png"
+  ]
+}
