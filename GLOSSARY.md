@@ -5,7 +5,7 @@ A Prompt tuning and data-cleaning workbench for preparing datasets, running mult
 ## Language
 
 **Dataset**:
-A logical, named collection of versioned data snapshots produced from uploaded Excel, CSV, or JSON files.
+A logical, named collection of versioned data snapshots produced from uploaded Excel, CSV, or JSON files. It exists independently of **Workflows**, and the same **Dataset Version** can be referenced by multiple **Workflows** without copying its records.
 _Avoid_: Data source, raw table, test file
 
 **Dataset Version**:

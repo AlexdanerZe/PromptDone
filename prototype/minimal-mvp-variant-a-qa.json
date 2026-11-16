@@ -1,0 +1,64 @@
+{
+  "scope": "仅 A 方案原型，虚构记录、固定响应、内存状态；浏览器中操作原生页面控件并检查状态，不是生产或真实容量测试。",
+  "checks": [
+    {
+      "check": "A 的全局资产导航与独立数据页；同一 v1 被两个工作流引用",
+      "value": true
+    },
+    {
+      "check": "复用相同数据仍隔离 Prompt、步骤与运行历史",
+      "value": true
+    },
+    {
+      "check": "新工作流无数据引用，不继承当前工作流；未选数据禁止运行",
+      "value": true
+    },
+    {
+      "check": "新工作流可引用已有版本，数据不被复制",
+      "value": true
+    },
+    {
+      "check": "明确选择目标工作流后切换引用，仅作用于该工作流后续运行",
+      "value": {
+        "first": "d1-v1",
+        "newFlow": "d1-v1",
+        "oldSecondRuns": [
+          "d1-v1",
+          "d1-v1"
+        ],
+        "second": "d1-v2",
+        "view": "datasets"
+      }
+    },
+    {
+      "check": "数据集新增版本独立发布，不自动升级任何工作流引用",
+      "value": true
+    },
+    {
+      "check": "数据集可独立创建和保存，无需创建或指定工作流",
+      "value": true
+    },
+    {
+      "check": "工作台内任务目录与历史仍整合；版本对比入口保留 A 导航",
+      "value": true
+    },
+    {
+      "check": "步骤可继续追加；旧运行仍保持原有两步骤快照",
+      "value": true
+    },
+    {
+      "check": "900px 布局主体无横向溢出；历史表在区域内滚动",
+      "value": true
+    },
+    {
+      "check": "浏览器控制台无错误",
+      "value": true
+    }
+  ],
+  "screenshots": [
+    "data-assets-desktop.png",
+    "shared-data-versions.png",
+    "workflow-desktop.png",
+    "workflow-history-narrow.png"
+  ]
+}
