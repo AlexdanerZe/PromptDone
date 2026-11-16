@@ -1,6 +1,6 @@
 # 0001: 全栈技术选型、多模型抽象与内网 Docker 部署架构
 
-- **Status**: accepted
+- **Status**: superseded by ADR-0002 (MVP 精简部分由 [ADR-0002](0002-mvp-architecture-simplification.md) 取代，核心技术栈沿用)
 
 结合数据清洗（百至数万条 Excel/CSV/偏 JSON）、多节点 DAG **Workflow** 异步批量跑测与多模型对比调优的核心负载，本平台采用 **前后端分离单仓库架构（React Vite TS SPA + Python FastAPI + Taskiq 异步 Worker）**，以 **PostgreSQL + Redis + Docker 本地持久卷** 为基础设施，在后端进程内直接集成 **LiteLLM Python SDK**，并由 **Nginx** 作为统一 Docker Compose 入口提供 HTTP/2 SSE 实时 **Execution Trace** 推流与轻量级 **Workspace** 隔离。
 
