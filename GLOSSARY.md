@@ -33,11 +33,11 @@ A single step inside a **Workflow** that binds to a published **Prompt Version**
 _Avoid_: Step, stage, module
 
 **Workflow**:
-A directed acyclic graph (DAG) of connected **Nodes** where upstream outputs map to downstream inputs for single-item, random-sample, or batch evaluation.
+A directed acyclic graph (DAG) of connected **Nodes** where upstream outputs map to downstream inputs for single-item, random-sample, or batch evaluation. The UI label “调优任务” names this same concept.
 _Avoid_: Pipeline, flow, chain
 
 **Workflow Run**:
-An immutable execution snapshot triggered within a **Tuning Session** that freezes the **Workflow** topology, each **Node**'s active Prompt and parameter snapshot, the bound **Dataset Version**, run mode, and resulting **Execution Traces**.
+An execution snapshot of a **Workflow** that freezes its topology, each **Node**'s active Prompt and parameters, the bound **Dataset Version**, selected records, and resulting **Execution Traces**. A **Tuning Session** may group runs, but is not required to create one.
 _Avoid_: Batch job, test run, run history item
 
 **Execution Trace**:
@@ -65,12 +65,16 @@ A configured LLM service endpoint within a **Workspace** that encapsulates crede
 _Avoid_: API vendor, gateway config, LLM key
 
 **Eval Suite**:
-A reusable **Workspace**-level evaluation configuration comprising Layer 1 deterministic rules, Layer 2 LLM-as-a-Judge rubrics, and weights that can be bound to a **Workflow** or a specific **Node**.
+A reusable **Workspace**-level evaluation configuration defining deterministic rules and, when configured, LLM-as-a-Judge rubrics and weights, bound to a **Workflow** or a specific **Node**.
 _Avoid_: Eval config, scoring template, test suite
 
 **Evaluation Run**:
-An immutable scoring pass attached to a **Workflow Run** that freezes the applied **Eval Suite** rules, judge rubric, model snapshot, and resulting per-record scores and human annotations.
+An immutable scoring pass attached to a **Workflow Run** that freezes the applied **Eval Suite** rules, optional judge configuration, and resulting automatic scores. Human judgments remain separate **Trace Annotations**.
 _Avoid_: Score run, judge batch, eval job
+
+**Trace Annotation**:
+A human judgment and diagnostic note for a specific **Node** execution within an **Execution Trace**, editable independently of frozen model outputs and automatic evaluation results.
+_Avoid_: Output edit, automatic score override
 
 **Prompt Review**:
 An on-demand static diagnostic pass performed by a high-tier model against a **Prompt** draft or **Prompt Version** using a review rubric, producing severity-ranked findings and diffable rewrite suggestions.

@@ -1,0 +1,61 @@
+{
+  "scope": "虚构样本与固定响应，内存状态；不是生产、容量或真实模型验证。",
+  "checks": [
+    {
+      "check": "任务切换保留独立草稿和历史",
+      "value": true
+    },
+    {
+      "check": "多个数据集与版本绑定，不覆盖旧运行或其他任务",
+      "value": {
+        "newBinding": "d4-v1",
+        "oldRun": "d1-v1",
+        "otherTask": "d2-v1"
+      }
+    },
+    {
+      "check": "新建任务直接加入常驻侧栏，无独立任务列表页",
+      "value": true
+    },
+    {
+      "check": "添加步骤3/4并保留旧批次的两步骤快照",
+      "value": true
+    },
+    {
+      "check": "切换任务不停止示例跑测；新批次包含新步骤且复用成功上游",
+      "value": {
+        "active": "w2",
+        "newRun": "completed",
+        "newSteps": 4,
+        "otherRuns": 2,
+        "reused": true
+      }
+    },
+    {
+      "check": "历史筛选、选择A/B与坏例对照导出",
+      "value": true
+    },
+    {
+      "check": "浏览器控制台无错误",
+      "value": true
+    }
+  ],
+  "layout": {
+    "narrow": {
+      "documentWidth": 900,
+      "width": 900
+    },
+    "downloads": [
+      "CSV",
+      "JSON"
+    ],
+    "status": "completed with failed/skipped counts visible",
+    "task_rail_in_dataset_view": true
+  },
+  "screenshots": [
+    "multiple-datasets.png",
+    "narrow-history.png",
+    "run-history.png",
+    "workbench-desktop.png"
+  ]
+}
